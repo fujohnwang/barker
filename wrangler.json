@@ -8,6 +8,13 @@
     "observability": {
         "enabled": true
     },
+    "routes": [
+        {
+            "pattern": "bark.afoo.me",
+            "zone_name": "afoo.me",
+            "custom_domain": true
+        }
+    ],
     "d1_databases": [
         {
             "binding": "database",
@@ -16,6 +23,7 @@
         }
     ],
     "vars": {
+        "BASIC_AUTH": "fq:1Q7912@b",
         "ALLOW_NEW_DEVICE": "true",
         "ALLOW_QUERY_NUMS": "true",
         "ROOT_PATH": "/"

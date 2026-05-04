@@ -25,6 +25,16 @@ async function handleRequest(request, env, ctx) {
         case '/healthz': {
             return handler.healthz(searchParams)
         }
+        case '/general-push': {
+            return new Response(JSON.stringify({
+                'code': 404,
+                'message': 'device_key is required, use /general-push/:device_key',
+                'timestamp': util.getTimestamp(),
+            }), {
+                status: 404,
+                headers: { 'content-type': 'application/json' },
+            })
+        }
         case '/info': {
             if (!util.validateBasicAuth(request, basicAuth)) {
                 return new Response('Unauthorized', {
@@ -39,6 +49,10 @@ async function handleRequest(request, env, ctx) {
         }
         default: {
             const pathParts = realPathname.split('/')
+
+            if (pathParts[1] === 'general-push' && pathParts[2]) {
+                return handler.generalPush(request, pathParts[2])
+            }
 
             if (pathParts[1]) {
                 if (!util.validateBasicAuth(request, basicAuth)) {
@@ -359,6 +373,33 @@ class Handler {
                     'content-type': 'application/json',
                 }
             })
+        }
+
+        this.generalPush = async (request, deviceKey) => {
+            let payload = {}
+
+            try {
+                const contentType = request.headers.get('content-type') || ''
+                if (contentType.includes('application/json')) {
+                    payload = await request.json()
+                }
+            } catch (error) {
+                return new Response(JSON.stringify({
+                    'code': 400,
+                    'message': `request parse failed: ${error}`,
+                    'timestamp': util.getTimestamp(),
+                }), {
+                    status: 400,
+                    headers: { 'content-type': 'application/json' },
+                })
+            }
+
+            const title = payload.title || 'General Push'
+            const body = (Object.keys(payload).length > 0)
+                ? JSON.stringify(payload, null, 2)
+                : 'Empty Payload'
+
+            return this.push({ device_key: deviceKey, title, body })
         }
 
         this.push = async (parameters) => {
